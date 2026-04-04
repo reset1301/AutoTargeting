@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<!-- Манифест ROS2-пакета: имя, зависимости, тип сборки (ament_python = пакет на Python). -->
+<package format="3">
+  <name>autotargeting_serial_bridge</name>
+  <version>0.1.0</version>
+  <description>Мост ROS2 → UART: углы pan/tilt для Arduino (pan-tilt).</description>
+  <maintainer email="todo@todo">AutoTargeting</maintainer>
+  <license>Apache-2.0</license>
+
+  <!-- rclpy — клиентская библиотека ROS2 для Python (узлы, топики, параметры). -->
+  <depend>rclpy</depend>
+  <!-- Стандартные сообщения geometry_msgs; Point используется как пара углов. -->
+  <depend>geometry_msgs</depend>
+
+  <!-- exec_depend: нужно во время запуска узла (пакет python3-serial в системе). -->
+  <exec_depend>python3-serial</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
