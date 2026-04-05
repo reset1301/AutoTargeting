@@ -20,7 +20,7 @@ setup(
     install_requires=['setuptools', 'pyserial'],
     zip_safe=True,
     maintainer='AutoTargeting',
-    maintainer_email='todo@todo',
+    maintainer_email='autotargeting@example.com',
     description='Serial bridge: pan/tilt angles to Arduino over UART.',
     license='Apache-2.0',
     tests_require=['pytest'],

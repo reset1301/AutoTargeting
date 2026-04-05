@@ -5,7 +5,7 @@
   <name>autotargeting_serial_bridge</name>
   <version>0.1.0</version>
   <description>Мост ROS2 → UART: углы pan/tilt для Arduino (pan-tilt).</description>
-  <maintainer email="todo@todo">AutoTargeting</maintainer>
+  <maintainer email="autotargeting@example.com">AutoTargeting</maintainer>
   <license>Apache-2.0</license>
 
   <!-- rclpy — клиентская библиотека ROS2 для Python (узлы, топики, параметры). -->

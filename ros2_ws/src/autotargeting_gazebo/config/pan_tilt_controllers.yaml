@@ -1,0 +1,14 @@
+# Общий файл для плагина gz_ros2_control и spawner controller_manager.
+controller_manager:
+  ros__parameters:
+    update_rate: 200
+    joint_group_position_controller:
+      type: position_controllers/JointGroupPositionController
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+joint_group_position_controller:
+  ros__parameters:
+    joints:
+      - pan_joint
+      - tilt_joint
