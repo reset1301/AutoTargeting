@@ -142,6 +142,7 @@ PROTO PanTiltTurret [
                 translation 0 0 0.06
                 children [
                   # Корпус камеры; «смотрит» вдоль +X (вперёд в FLU).
+                  # Размеры корпуса: длина Lx=0.07, ширина Wy=0.045, высота Hz=0.035.
                   Transform {
                     translation 0.01 0 0.02
                     children [
@@ -153,6 +154,54 @@ PROTO PanTiltTurret [
                         }
                         geometry Box {
                           size 0.07 0.045 0.035
+                        }
+                      }
+                    ]
+                  }
+                  # Два параллелепипеда слева/справа: дети TILT_HEAD → крутятся вместе с камерой.
+                  # Длина = 5×Lx = 0.35; квадратное сечение = 1.5×Wy = 0.0675 × 0.0675.
+                  # Центр масс на оси tilt (локальная Y через начало TILT_HEAD): translation x=0, z=0.
+                  # Зазор от бока камеры = 1×Wy = 0.045 → |Y| =
+                  #   Wy/2 + gap + section/2 = 0.0225 + 0.045 + 0.03375 = 0.10125.
+                  Transform {
+                    translation 0 0.10125 0
+                    children [
+                      DEF BEAM_SHAPE Shape {
+                        appearance PBRAppearance {
+                          baseColor 0.55 0.42 0.22
+                          roughness 0.65
+                          metalness 0.05
+                        }
+                        geometry Box {
+                          size 0.35 0.0675 0.0675
+                        }
+                      }
+                    ]
+                  }
+                  Transform {
+                    translation 0 -0.10125 0
+                    children [
+                      USE BEAM_SHAPE
+                    ]
+                  }
+                  # Поперечная ось: соединяет брусья и узел камеры.
+                  # Диаметр = Wy/2 = 0.0225 → radius 0.01125.
+                  # Длина = зазор между внутренними гранями брусьев =
+                  #   2*|Y| − section = 0.2025 − 0.0675 = 0.135.
+                  # Cylinder по умолчанию вдоль Z → поворот на π/2 вокруг X → ось вдоль Y.
+                  Transform {
+                    translation 0 0 0
+                    rotation 1 0 0 1.5708
+                    children [
+                      Shape {
+                        appearance PBRAppearance {
+                          baseColor 0.4 0.42 0.45
+                          roughness 0.35
+                          metalness 0.35
+                        }
+                        geometry Cylinder {
+                          height 0.135
+                          radius 0.01125
                         }
                       }
                     ]
@@ -193,12 +242,47 @@ PROTO PanTiltTurret [
                   }
                 ]
                 name "camera_head"
-                boundingObject Box {
-                  size 0.08 0.05 0.05
+                boundingObject Group {
+                  children [
+                    Transform {
+                      translation 0.01 0 0.02
+                      children [
+                        Box {
+                          size 0.07 0.045 0.035
+                        }
+                      ]
+                    }
+                    Transform {
+                      translation 0 0.10125 0
+                      children [
+                        Box {
+                          size 0.35 0.0675 0.0675
+                        }
+                      ]
+                    }
+                    Transform {
+                      translation 0 -0.10125 0
+                      children [
+                        Box {
+                          size 0.35 0.0675 0.0675
+                        }
+                      ]
+                    }
+                    Transform {
+                      translation 0 0 0
+                      rotation 1 0 0 1.5708
+                      children [
+                        Cylinder {
+                          height 0.135
+                          radius 0.01125
+                        }
+                      ]
+                    }
+                  ]
                 }
                 physics Physics {
                   density -1
-                  mass 0.12
+                  mass 0.3
                 }
               }
             }
