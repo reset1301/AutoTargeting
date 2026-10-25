@@ -1,18 +1,18 @@
 #VRML_SIM R2025a utf8
-# AutoTargeting: визуальная pan-tilt турель для Webots (Mac / R2025a).
+# AutoTargeting: pan-tilt турель следит за шаром на эллипсе 10×7 × L_beam на высоте 10×L_beam.
 # File → Open World → этот файл → Run (▶).
-# Контроллер: controllers/pan_tilt_demo (цикл трёх поз, как demo_mode у serial_bridge).
+# Нужен supervisor у турели (контроллер двигает TARGET_BALL).
 
 EXTERNPROTO "../protos/PanTiltTurret.proto"
 
 WorldInfo {
-  title "AutoTargeting Pan-Tilt Turret"
+  title "AutoTargeting Pan-Tilt Turret Tracking"
   basicTimeStep 16
   coordinateSystem "ENU"
 }
 Viewpoint {
-  orientation -0.4 0.5 0.75 1.2
-  position 0.55 -0.55 0.45
+  orientation -0.35 0.55 0.75 1.35
+  position 6 -7 5
 }
 Background {
   skyColor [
@@ -25,6 +25,7 @@ DirectionalLight {
   intensity 1.2
   castShadows TRUE
 }
+# Пол увеличен под эллипс (полуоси до ~3.5 м).
 Solid {
   translation 0 0 -0.005
   name "floor"
@@ -36,16 +37,38 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 2 2 0.01
+        size 12 12 0.01
       }
     }
   ]
   boundingObject Box {
-    size 2 2 0.01
+    size 12 12 0.01
+  }
+}
+# Цель: диаметр = 1× длина камеры (0.07). Движение задаёт supervisor-контроллер турели.
+DEF TARGET_BALL Solid {
+  translation 3.5 0 3.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.85 0.15 0.12
+        roughness 0.35
+        metalness 0.05
+      }
+      geometry Sphere {
+        radius 0.035
+        subdivision 3
+      }
+    }
+  ]
+  name "target_ball"
+  boundingObject Sphere {
+    radius 0.035
   }
 }
 PanTiltTurret {
   translation 0 0 0
   name "pan_tilt_turret"
   controller "pan_tilt_demo"
+  supervisor TRUE
 }

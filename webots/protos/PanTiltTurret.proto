@@ -73,10 +73,10 @@ PROTO PanTiltTurret [
         device [
           RotationalMotor {
             name "pan"
-            acceleration 8
+            acceleration 12
             minPosition -1.5708
             maxPosition 1.5708
-            maxVelocity 2.5
+            maxVelocity 4
             maxTorque 1.5
             sound ""
           }
@@ -126,10 +126,10 @@ PROTO PanTiltTurret [
               device [
                 RotationalMotor {
                   name "tilt"
-                  acceleration 8
+                  acceleration 12
                   minPosition -1.5708
                   maxPosition 1.5708
-                  maxVelocity 2.5
+                  maxVelocity 4
                   maxTorque 1.2
                   sound ""
                 }
