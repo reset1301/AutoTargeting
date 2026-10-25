@@ -1,0 +1,51 @@
+#VRML_SIM R2025a utf8
+# AutoTargeting: визуальная pan-tilt турель для Webots (Mac / R2025a).
+# File → Open World → этот файл → Run (▶).
+# Контроллер: controllers/pan_tilt_demo (цикл трёх поз, как demo_mode у serial_bridge).
+
+EXTERNPROTO "../protos/PanTiltTurret.proto"
+
+WorldInfo {
+  title "AutoTargeting Pan-Tilt Turret"
+  basicTimeStep 16
+  coordinateSystem "ENU"
+}
+Viewpoint {
+  orientation -0.4 0.5 0.75 1.2
+  position 0.55 -0.55 0.45
+}
+Background {
+  skyColor [
+    0.45 0.65 0.9
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.55
+  direction 0.3 -0.5 -1
+  intensity 1.2
+  castShadows TRUE
+}
+Solid {
+  translation 0 0 -0.005
+  name "floor"
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.58 0.52
+        roughness 0.9
+        metalness 0
+      }
+      geometry Box {
+        size 2 2 0.01
+      }
+    }
+  ]
+  boundingObject Box {
+    size 2 2 0.01
+  }
+}
+PanTiltTurret {
+  translation 0 0 0
+  name "pan_tilt_turret"
+  controller "pan_tilt_demo"
+}

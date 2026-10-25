@@ -1,0 +1,219 @@
+#VRML_SIM R2025a utf8
+# license: Apache License 2.0
+# license url: https://www.apache.org/licenses/LICENSE-2.0
+# tags: static
+# documentation url: https://github.com/reset1301/AutoTargeting
+# keywords: robot, pan-tilt, turret, servo
+#
+# Упрощённая pan-tilt турель под AutoTargeting (крепление MaixCam).
+# Система координат робота — FLU (Webots R2022a+): X вперёд, Y влево, Z вверх.
+#
+# Моторы:
+#   "pan"  — yaw вокруг Z (горизонталь)
+#   "tilt" — pitch вокруг Y (вертикаль камеры)
+#
+# Позиции моторов — радианы от механического центра (Arduino 90° → 0 rad).
+# Arduino 0…180°:  webots_rad = (arduino_deg - 90) * pi / 180
+
+PROTO PanTiltTurret [
+  field SFVec3f    translation     0 0 0
+  field SFRotation rotation        0 0 1 0
+  field SFString   name            "pan_tilt_turret"
+  field SFString   controller      "pan_tilt_demo"
+  field MFString   controllerArgs  []
+  field SFString   customData      ""
+  field SFBool     supervisor      FALSE
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    name IS name
+    controller IS controller
+    controllerArgs IS controllerArgs
+    customData IS customData
+    supervisor IS supervisor
+    # basicTimeStep задаётся в WorldInfo мира, не в Robot (R2025a).
+    children [
+      # Неподвижное основание (пьедестал), ось Z вверх.
+      DEF BASE Solid {
+        translation 0 0 0.04
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.25 0.27 0.3
+              roughness 0.55
+              metalness 0.15
+            }
+            geometry Cylinder {
+              height 0.08
+              radius 0.07
+            }
+          }
+        ]
+        name "base"
+        boundingObject Cylinder {
+          height 0.08
+          radius 0.07
+        }
+        physics Physics {
+          density -1
+          mass 0.4
+        }
+      }
+
+      # PAN (yaw): вращение вокруг вертикали Z.
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          axis 0 0 1
+          anchor 0 0 0.09
+          dampingConstant 0.2
+          staticFriction 0.05
+        }
+        device [
+          RotationalMotor {
+            name "pan"
+            acceleration 8
+            minPosition -1.5708
+            maxPosition 1.5708
+            maxVelocity 2.5
+            maxTorque 1.5
+            sound ""
+          }
+          PositionSensor {
+            name "pan_sensor"
+            resolution -1
+          }
+        ]
+        endPoint DEF PAN_YAW Solid {
+          translation 0 0 0.09
+          children [
+            Shape {
+              appearance PBRAppearance {
+                baseColor 0.45 0.48 0.52
+                roughness 0.4
+                metalness 0.25
+              }
+              geometry Cylinder {
+                height 0.02
+                radius 0.055
+              }
+            }
+            Transform {
+              translation 0 0 0.035
+              children [
+                Shape {
+                  appearance PBRAppearance {
+                    baseColor 0.35 0.38 0.42
+                    roughness 0.45
+                    metalness 0.2
+                  }
+                  geometry Box {
+                    size 0.04 0.02 0.05
+                  }
+                }
+              ]
+            }
+
+            # TILT (pitch): вращение вокруг Y (влево) — кивок камеры.
+            HingeJoint {
+              jointParameters HingeJointParameters {
+                axis 0 1 0
+                anchor 0 0 0.06
+                dampingConstant 0.15
+                staticFriction 0.05
+              }
+              device [
+                RotationalMotor {
+                  name "tilt"
+                  acceleration 8
+                  minPosition -1.5708
+                  maxPosition 1.5708
+                  maxVelocity 2.5
+                  maxTorque 1.2
+                  sound ""
+                }
+                PositionSensor {
+                  name "tilt_sensor"
+                  resolution -1
+                }
+              ]
+              endPoint DEF TILT_HEAD Solid {
+                translation 0 0 0.06
+                children [
+                  # Корпус камеры; «смотрит» вдоль +X (вперёд в FLU).
+                  Transform {
+                    translation 0.01 0 0.02
+                    children [
+                      Shape {
+                        appearance PBRAppearance {
+                          baseColor 0.12 0.12 0.14
+                          roughness 0.35
+                          metalness 0.05
+                        }
+                        geometry Box {
+                          size 0.07 0.045 0.035
+                        }
+                      }
+                    ]
+                  }
+                  # Объектив спереди (+X).
+                  Transform {
+                    translation 0.05 0 0.02
+                    rotation 0 1 0 1.5708
+                    children [
+                      Shape {
+                        appearance PBRAppearance {
+                          baseColor 0.05 0.45 0.75
+                          roughness 0.2
+                          metalness 0.4
+                        }
+                        geometry Cylinder {
+                          height 0.012
+                          radius 0.012
+                        }
+                      }
+                    ]
+                  }
+                  # Маркер «верх», чтобы глазом читать tilt.
+                  Transform {
+                    translation 0.01 0 0.04
+                    children [
+                      Shape {
+                        appearance PBRAppearance {
+                          baseColor 0.9 0.55 0.1
+                          roughness 0.5
+                          metalness 0
+                        }
+                        geometry Box {
+                          size 0.015 0.015 0.008
+                        }
+                      }
+                    ]
+                  }
+                ]
+                name "camera_head"
+                boundingObject Box {
+                  size 0.08 0.05 0.05
+                }
+                physics Physics {
+                  density -1
+                  mass 0.12
+                }
+              }
+            }
+          ]
+          name "pan_yaw"
+          boundingObject Cylinder {
+            height 0.02
+            radius 0.055
+          }
+          physics Physics {
+            density -1
+            mass 0.2
+          }
+        }
+      }
+    ]
+  }
+}

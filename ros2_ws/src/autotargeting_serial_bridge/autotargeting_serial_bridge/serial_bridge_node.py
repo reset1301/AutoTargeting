@@ -88,7 +88,7 @@ class SerialBridgeNode(Node):
 
     def _write_line(self, pan: int, tilt: int) -> None:
         if self._ser is None or not self._ser.is_open:
-            self.get_logger().warn('UART недоступен, строка не отправлена')
+            self.get_logger().warning('UART недоступен, строка не отправлена')
             return
         body = f'{pan},{tilt}'
         # Префикс '$' согласован со скетчем: проще отличить кадр от мусора при синхронизации.
