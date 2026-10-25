@@ -35,9 +35,11 @@ PROTO PanTiltTurret [
     supervisor IS supervisor
     # basicTimeStep задаётся в WorldInfo мира, не в Robot (R2025a).
     children [
-      # Неподвижное основание (пьедестал), ось Z вверх.
+      # Неподвижное основание (высокий пьедестал), ось Z вверх.
+      # Высота подобрана так, чтобы брусья 0.35 м при tilt ±90° не били о пол:
+      # ось tilt ≈ 0.48 м > половина длины бруса (0.175) + запас.
       DEF BASE Solid {
-        translation 0 0 0.04
+        translation 0 0 0.20
         children [
           Shape {
             appearance PBRAppearance {
@@ -46,38 +48,38 @@ PROTO PanTiltTurret [
               metalness 0.15
             }
             geometry Cylinder {
-              height 0.08
+              height 0.40
               radius 0.07
             }
           }
         ]
         name "base"
         boundingObject Cylinder {
-          height 0.08
+          height 0.40
           radius 0.07
         }
         physics Physics {
           density -1
-          mass 0.4
+          mass 0.6
         }
       }
 
       # PAN (yaw): вращение вокруг вертикали Z.
-      HingeJoint {
+      DEF PAN_JOINT HingeJoint {
         jointParameters HingeJointParameters {
           axis 0 0 1
-          anchor 0 0 0.09
-          dampingConstant 0.2
-          staticFriction 0.05
+          anchor 0 0 0.42
+          dampingConstant 0.02
+          staticFriction 0
         }
         device [
           RotationalMotor {
             name "pan"
-            acceleration 12
+            acceleration -1
             minPosition -1.5708
             maxPosition 1.5708
-            maxVelocity 4
-            maxTorque 1.5
+            maxVelocity 50
+            maxTorque 10
             sound ""
           }
           PositionSensor {
@@ -86,7 +88,7 @@ PROTO PanTiltTurret [
           }
         ]
         endPoint DEF PAN_YAW Solid {
-          translation 0 0 0.09
+          translation 0 0 0.42
           children [
             Shape {
               appearance PBRAppearance {
@@ -116,21 +118,21 @@ PROTO PanTiltTurret [
             }
 
             # TILT (pitch): вращение вокруг Y (влево) — кивок камеры.
-            HingeJoint {
+            DEF TILT_JOINT HingeJoint {
               jointParameters HingeJointParameters {
                 axis 0 1 0
                 anchor 0 0 0.06
-                dampingConstant 0.15
-                staticFriction 0.05
+                dampingConstant 0.02
+                staticFriction 0
               }
               device [
                 RotationalMotor {
                   name "tilt"
-                  acceleration 12
+                  acceleration -1
                   minPosition -1.5708
                   maxPosition 1.5708
-                  maxVelocity 4
-                  maxTorque 1.2
+                  maxVelocity 50
+                  maxTorque 10
                   sound ""
                 }
                 PositionSensor {

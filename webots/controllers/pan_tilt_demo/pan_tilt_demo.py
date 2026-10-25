@@ -1,34 +1,33 @@
-"""Контроллер Webots: цель по эллипсу + слежение pan/tilt.
+"""Контроллер: шар по эллипсу + наведение pan/tilt через моторы.
 
-Шар TARGET_BALL движется в горизонтальной плоскости по эллипсу;
-турель постоянно наводится на него (Supervisor + RotationalMotor).
+Почему раньше «теряли» шар в одном месте:
+  эллипс был вокруг начала координат → цель уходила в заднюю полусферу,
+  а мотор pan ограничен ±90° (как hobby-серво). На упоре турель разворачивалась
+  и ждала, пока шар снова появится спереди.
 
-Размеры (как в PanTiltTurret.proto):
-  Lx_cam = 0.07, L_beam = 0.35
-  высота эллипса = 10 * L_beam
-  полуоси эллипса = 10 * L_beam и 7 * L_beam
-  диаметр шара = 1 * Lx_cam
+Почему сыпались ошибки supervisor:
+  position сустава внутри PROTO — read-only для set_sf_float.
+  Наведение только через RotationalMotor.setPosition().
 
-Углы моторов — радианы от центра (0 = «Arduino 90°»).
+Эллипс с теми же полуосями/высотой сдвинут вперёд (+X), целиком в зоне pan.
 """
 
 import math
 
 from controller import Supervisor
 
-# --- Геометрия сцены (согласовано с PROTO) ---
-_CAM_LENGTH = 0.07
 _BEAM_LENGTH = 0.35
 
-_BALL_RADIUS = _CAM_LENGTH / 2.0  # диаметр = 1× длина камеры
-_ELLIPSE_Z = 10.0 * _BEAM_LENGTH  # высота плоскости
-_ELLIPSE_A = 10.0 * _BEAM_LENGTH  # полуось по X
-_ELLIPSE_B = 7.0 * _BEAM_LENGTH  # полуось по Y
+_ELLIPSE_Z = 10.0 * _BEAM_LENGTH
+_ELLIPSE_A = 10.0 * _BEAM_LENGTH  # полуось вдоль X (вперёд)
+_ELLIPSE_B = 7.0 * _BEAM_LENGTH  # полуось вдоль Y (влево/вправо)
+# Центр орбиты впереди турели: весь эллипс в x > 0 (pan ∈ ±90°).
+# C > A  ⇒  минимальный x = C − A > 0.
+_ELLIPSE_CENTER_X = _ELLIPSE_A + 1.5  # x ∈ [1.5 .. 2A+1.5]
+_ELLIPSE_CENTER_Y = 0.0
 
-# Приблизительный оптический центр при pan=tilt=0 (FLU, Z вверх).
-_CAM_PIVOT = (0.0, 0.0, 0.15)
-
-# Полный оборот шара по эллипсу, секунды.
+# Ось tilt после поднятия пьедестала: pan@0.42 + tilt@0.06 ≈ 0.48 м.
+_CAM_PIVOT = (0.0, 0.0, 0.48)
 _ORBIT_PERIOD_SEC = 20.0
 
 _PAN_LIMIT = 1.5708
@@ -40,12 +39,6 @@ def _clamp(value: float, lo: float, hi: float) -> float:
 
 
 def _look_at_angles(target, pivot=_CAM_PIVOT):
-    """Pan (yaw вокруг Z) и tilt (pitch вокруг Y) из вектора на цель.
-
-    При (pan, tilt) = (0, 0) камера смотрит вдоль +X.
-    Положительный pan — к +Y; положительный tilt-мотор — нос вниз,
-    поэтому команда tilt = −atan2(dz, r).
-    """
     dx = target[0] - pivot[0]
     dy = target[1] - pivot[1]
     dz = target[2] - pivot[2]
@@ -62,12 +55,8 @@ def main() -> None:
     robot = Supervisor()
     timestep = int(robot.getBasicTimeStep())
 
-    pan = robot.getDevice('pan')
-    tilt = robot.getDevice('tilt')
-    pan_sensor = robot.getDevice('pan_sensor')
-    tilt_sensor = robot.getDevice('tilt_sensor')
-    pan_sensor.enable(timestep)
-    tilt_sensor.enable(timestep)
+    pan_motor = robot.getDevice('pan')
+    tilt_motor = robot.getDevice('tilt')
 
     ball = robot.getFromDef('TARGET_BALL')
     if ball is None:
@@ -76,21 +65,24 @@ def main() -> None:
     translation_field = ball.getField('translation')
 
     omega = 2.0 * math.pi / _ORBIT_PERIOD_SEC
+    x_min = _ELLIPSE_CENTER_X - _ELLIPSE_A
+    x_max = _ELLIPSE_CENTER_X + _ELLIPSE_A
     print(
-        f'[pan_tilt_demo] ellipse a={_ELLIPSE_A:.2f} b={_ELLIPSE_B:.2f} '
-        f'z={_ELLIPSE_Z:.2f}; ball r={_BALL_RADIUS:.3f}; T={_ORBIT_PERIOD_SEC:.0f}s'
+        f'[pan_tilt_demo] ellipse center=({_ELLIPSE_CENTER_X:.2f}, '
+        f'{_ELLIPSE_CENTER_Y:.2f}, {_ELLIPSE_Z:.2f}) '
+        f'a={_ELLIPSE_A:.2f} b={_ELLIPSE_B:.2f}; x∈[{x_min:.2f},{x_max:.2f}]'
     )
 
     while robot.step(timestep) != -1:
         t = robot.getTime()
-        x = _ELLIPSE_A * math.cos(omega * t)
-        y = _ELLIPSE_B * math.sin(omega * t)
+        x = _ELLIPSE_CENTER_X + _ELLIPSE_A * math.cos(omega * t)
+        y = _ELLIPSE_CENTER_Y + _ELLIPSE_B * math.sin(omega * t)
         z = _ELLIPSE_Z
         translation_field.setSFVec3f([x, y, z])
 
-        pan_cmd, tilt_cmd = _look_at_angles((x, y, z))
-        pan.setPosition(pan_cmd)
-        tilt.setPosition(tilt_cmd)
+        pan_des, tilt_des = _look_at_angles((x, y, z))
+        pan_motor.setPosition(pan_des)
+        tilt_motor.setPosition(tilt_des)
 
 
 if __name__ == '__main__':
